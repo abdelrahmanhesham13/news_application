@@ -9,23 +9,28 @@ import androidx.compose.runtime.snapshotFlow
 
 @Composable
 fun LazyListState.OnBottomReached(
-    loadMore : () -> Unit
-){
+    // tells how many items before we reach the bottom of the list
+    // to call onLoadMore function
+    buffer : Int = 0,
+    onLoadMore : () -> Unit
+) {
+    // Buffer must be positive.
+    // Or our list will never reach the bottom.
+    require(buffer >= 0) { "buffer cannot be negative, but was $buffer" }
+
     val shouldLoadMore = remember {
         derivedStateOf {
             val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
-                ?: return@derivedStateOf true
+                ?:
+                return@derivedStateOf true
 
-            lastVisibleItem.index == layoutInfo.totalItemsCount - 1
+            // subtract buffer from the total items
+            lastVisibleItem.index >=  layoutInfo.totalItemsCount - 1 - buffer
         }
     }
 
-    // Convert the state into a cold flow and collect
     LaunchedEffect(shouldLoadMore){
         snapshotFlow { shouldLoadMore.value }
-            .collect {
-                // if should load more, then invoke loadMore
-                if (it) loadMore()
-            }
+            .collect { if (it) onLoadMore() }
     }
 }
