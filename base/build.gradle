@@ -40,9 +40,23 @@ dependencies {
 
     implementation project(":common")
 
-    // RecyclerView
-    api "androidx.recyclerview:recyclerview:$recyclerView"
+    // Compose UI
+    api "androidx.activity:activity-compose:$activityComposeVersion"
+    api platform("androidx.compose:compose-bom:$composeBomVersion")
+    api 'androidx.compose.ui:ui'
+    api 'androidx.compose.ui:ui-graphics'
+    api 'androidx.compose.ui:ui-tooling-preview'
+    api 'androidx.compose.material:material'
 
-    // JetPack
-    api "androidx.fragment:fragment-ktx:$fragment_ktx"
+    // Compose ViewModel
+    api "androidx.lifecycle:lifecycle-viewmodel-compose:$composeViewModelVersion"
+
+    // Compose Coil
+    api("io.coil-kt:coil-compose:$coilComposeVersion")
+
+    // Compose Hilt Navigation
+    api("androidx.hilt:hilt-navigation-compose:$hiltNavigationComposeVersion")
+
+    // Compose Navigation
+    api("androidx.navigation:navigation-compose:$navigationComposeVersion")
 }

@@ -8,7 +8,7 @@ class TestDataGenerator {
 
     companion object {
 
-        fun generateNews(): PagingModel<List<NewEntity>> {
+        fun generateNews(page: Int = 1): PagingModel<List<NewEntity>> {
             val list = mutableListOf<NewEntity>().apply {
                 add(
                     NewEntity(
@@ -84,7 +84,8 @@ class TestDataGenerator {
                 )
             }
 
-            return PagingModel(list, total = 12, currentPage = 1)
+            return if ( page == 1) PagingModel(list, total = 12, currentPage = 1)
+            else PagingModel(list, total = 12, currentPage = 2)
         }
 
     }

@@ -28,6 +28,13 @@ ext {
     materialDialogVersion = "3.3.0"
     javaxInjectVersion = "1"
     roomVersion = "2.2.6"
+    biometricVersion = "1.1.0"
+    activityComposeVersion = "1.7.2"
+    composeViewModelVersion = "2.6.1"
+    composeBomVersion = "2023.05.01"
+    coilComposeVersion = "2.4.0"
+    hiltNavigationComposeVersion = "1.0.0"
+    navigationComposeVersion = "2.6.0"
     // Test Dependencies
     coreTestingVersion = "2.2.0"
     truthVersion = "1.1.2"

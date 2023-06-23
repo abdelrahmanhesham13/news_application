@@ -9,7 +9,7 @@ import com.example.feature.model.NewUiModel
 class HomeContract {
 
     sealed class Event : UiEvent {
-        object OnPullToRefresh : Event()
+        object OnRefresh : Event()
         object FetchData : Event()
         object LoadMoreData: Event()
         data class NewSelected(val newUiModel: NewUiModel): Event()

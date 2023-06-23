@@ -17,12 +17,12 @@ class BiometricHelper {
         }
 
         fun showBiometricDialog(
-            fragment: Fragment,
+            activity: FragmentActivity,
             onSuccess: () -> Unit,
             onFailed: () -> Unit
         ) {
-            val executor = ContextCompat.getMainExecutor(fragment.requireContext())
-            val biometricPrompt = BiometricPrompt(fragment, executor,
+            val executor = ContextCompat.getMainExecutor(activity)
+            val biometricPrompt = BiometricPrompt(activity, executor,
                 object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationError(errorCode: Int,
                                                        errString: CharSequence) {

@@ -32,7 +32,7 @@ class HomeViewModel @Inject constructor(
 
     override fun handleEvent(event: HomeContract.Event) {
         when (event) {
-            is HomeContract.Event.OnPullToRefresh, is HomeContract.Event.FetchData -> {
+            is HomeContract.Event.OnRefresh, is HomeContract.Event.FetchData -> {
                 fetchData()
             }
             HomeContract.Event.LoadMoreData -> {
@@ -48,9 +48,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             getNewsUseCase.execute(page)
                 .onStart {
-                    setState {
-                        copy(homeState = HomeContract.HomeState.Loading)
-                    }
+                    if (page == 1) setState { copy(homeState = HomeContract.HomeState.Loading) }
                 }
                 .catch {
                     // Set Effect

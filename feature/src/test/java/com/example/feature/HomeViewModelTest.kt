@@ -24,6 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -179,7 +180,7 @@ class HomeViewModelTest {
                     homeState = HomeContract.HomeState.Idle
                 )
             )
-            homeViewModel.setEvent(HomeContract.Event.OnPullToRefresh)
+            homeViewModel.setEvent(HomeContract.Event.OnRefresh)
             // Expect Loading
             Truth.assertThat(expectItem()).isEqualTo(
                 HomeContract.State(
@@ -220,87 +221,92 @@ class HomeViewModelTest {
 
     @Test
     fun `test fetch data success using load more`() = runTest {
+        withContext(Dispatchers.Default) {
+            val newsItems = TestDataGenerator.generateNews()
+            val newsFlow = flowOf(newsItems)
+            val newsItemsPage2 = TestDataGenerator.generateNews(2)
 
-        val newsItems = TestDataGenerator.generateNews()
-        val newsFlow = flowOf(newsItems)
+            // Given
+            coEvery { getNewsUseCase.execute(1) } returns newsFlow
+            coEvery { getNewsUseCase.execute(2) } returns flowOf(newsItemsPage2)
 
-        // Given
-        coEvery { getNewsUseCase.execute(1) } returns newsFlow
-        coEvery { getNewsUseCase.execute(2) } returns newsFlow
-
-        // When && Assertions
-        homeViewModel.uiState.test {
-            // Expect Idle from initial state
-            Truth.assertThat(expectItem()).isEqualTo(
-                HomeContract.State(
-                    homeState = HomeContract.HomeState.Idle
-                )
-            )
-            homeViewModel.setEvent(HomeContract.Event.FetchData)
-            // Expect Loading
-            Truth.assertThat(expectItem()).isEqualTo(
-                HomeContract.State(
-                    homeState = HomeContract.HomeState.Loading
-                )
-            )
-            // Expect Success
-            val expected = expectItem()
-            val uiModels = newMapper.fromList(newsItems.data)
-            Truth.assertThat(expected).isEqualTo(
-                HomeContract.State(
-                    homeState = HomeContract.HomeState.Success(
-                        news = PagingModel(uiModels, newsItems.total, newsItems.currentPage),
-                        title = uiModels.firstOrNull()?.sourceUiModel?.name ?: ""
+            // When && Assertions
+            homeViewModel.uiState.test {
+                // Expect Idle from initial state
+                Truth.assertThat(expectItem()).isEqualTo(
+                    HomeContract.State(
+                        homeState = HomeContract.HomeState.Idle
                     )
                 )
-            )
-
-            val expectedData =
-                (expected.homeState as HomeContract.HomeState.Success).news
-            Truth.assertThat(expectedData)
-                .isEqualTo(PagingModel(uiModels, newsItems.total, newsItems.currentPage))
-
-            val models = (expected.homeState as HomeContract.HomeState.Success).news.data
-            Truth.assertThat(
-                models
-            ).containsExactlyElementsIn(uiModels)
-
-            homeViewModel.setEvent(HomeContract.Event.LoadMoreData)
-            // Expect Loading
-            Truth.assertThat(expectItem()).isEqualTo(
-                HomeContract.State(
-                    homeState = HomeContract.HomeState.Loading
-                )
-            )
-            // Expect Success
-            val expectedPageTwo = expectItem()
-            Truth.assertThat(expectedPageTwo).isEqualTo(
-                HomeContract.State(
-                    homeState = HomeContract.HomeState.Success(
-                        news = PagingModel(uiModels + uiModels, newsItems.total, newsItems.currentPage),
-                        title = uiModels.firstOrNull()?.sourceUiModel?.name ?: ""
+                homeViewModel.setEvent(HomeContract.Event.FetchData)
+                // Expect Loading
+                Truth.assertThat(expectItem()).isEqualTo(
+                    HomeContract.State(
+                        homeState = HomeContract.HomeState.Loading
                     )
                 )
-            )
+                // Expect Success
+                val expected = expectItem()
+                val uiModels = newMapper.fromList(newsItems.data)
+                Truth.assertThat(expected).isEqualTo(
+                    HomeContract.State(
+                        homeState = HomeContract.HomeState.Success(
+                            news = PagingModel(uiModels, newsItems.total, newsItems.currentPage),
+                            title = uiModels.firstOrNull()?.sourceUiModel?.name ?: ""
+                        )
+                    )
+                )
 
-            val modelsPageTwo = (expected.homeState as HomeContract.HomeState.Success).news
-            Truth.assertThat(modelsPageTwo)
-                .isEqualTo(PagingModel(uiModels + uiModels, newsItems.total, newsItems.currentPage))
+                val expectedData =
+                    (expected.homeState as HomeContract.HomeState.Success).news
+                Truth.assertThat(expectedData)
+                    .isEqualTo(PagingModel(uiModels, newsItems.total, newsItems.currentPage))
 
-            Truth.assertThat(
-                modelsPageTwo.data
-            ).containsExactlyElementsIn(uiModels + uiModels)
+                val models = (expected.homeState as HomeContract.HomeState.Success).news.data
+                Truth.assertThat(
+                    models
+                ).containsExactlyElementsIn(uiModels)
+
+                homeViewModel.setEvent(HomeContract.Event.LoadMoreData)
+                // Expect Success
+                val expectedPageTwo = expectItem()
+                Truth.assertThat(expectedPageTwo).isEqualTo(
+                    HomeContract.State(
+                        homeState = HomeContract.HomeState.Success(
+                            news = PagingModel(
+                                uiModels + uiModels,
+                                newsItemsPage2.total,
+                                newsItemsPage2.currentPage
+                            ),
+                            title = uiModels.firstOrNull()?.sourceUiModel?.name ?: ""
+                        )
+                    )
+                )
+
+                val modelsPageTwo = (expected.homeState as HomeContract.HomeState.Success).news
+                Truth.assertThat(modelsPageTwo)
+                    .isEqualTo(
+                        PagingModel(
+                            uiModels + uiModels,
+                            newsItems.total,
+                            newsItems.currentPage
+                        )
+                    )
+
+                Truth.assertThat(
+                    modelsPageTwo.data
+                ).containsExactlyElementsIn(uiModels + uiModels)
 
 
+                //Cancel and ignore remaining
+                cancelAndIgnoreRemainingEvents()
+            }
 
-            //Cancel and ignore remaining
-            cancelAndIgnoreRemainingEvents()
+
+            // Then
+            coVerify { getNewsUseCase.execute(1) }
+            coVerify { getNewsUseCase.execute(2) }
         }
-
-
-        // Then
-        coVerify { getNewsUseCase.execute(1) }
-        coVerify { getNewsUseCase.execute(2) }
     }
 
     @Test
